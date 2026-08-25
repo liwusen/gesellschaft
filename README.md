@@ -14,6 +14,7 @@
     <img src="https://img.shields.io/github/v/release/liwusen/gesellschaft" alt="release"/></a>
 <a href="https://github.com/liwusen/gesellschaft/actions/workflows/npm-publish.yml">
     <img src="https://github.com/liwusen/gesellschaft/actions/workflows/npm-publish.yml/badge.svg" alt="npm publish"/></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fliwusen%2Fgesellschaft?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fliwusen%2Fgesellschaft.svg?type=shield"/></a>
 <img src="https://img.shields.io/badge/license-GPLv3-blue" alt="license"/>
 <a href="https://gesellschaft.allenlee.xyz">
     <img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E5%AE%9E%E4%BE%8B-gesellschaft.allenlee.xyz-3c96ca" alt="instance"/></a>
@@ -237,3 +238,7 @@ npmjs.com 包设置中绑定本仓库 + `npm-publish.yml` workflow,
 
 - 本仓库随 FaustBot 主项目采用 **GPLv3**
 - 线上实例由 [allenlee](https://github.com/liwusen) 运营,数据不做持久性承诺
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fliwusen%2Fgesellschaft.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fliwusen%2Fgesellschaft?ref=badge_large)
