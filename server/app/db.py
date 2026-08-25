@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS modules (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT UNIQUE NOT NULL,
   owner_user_id INTEGER NOT NULL REFERENCES users(id),
+  license TEXT NOT NULL DEFAULT 'MIT',
   description TEXT NOT NULL DEFAULT '',
   usage_text TEXT NOT NULL DEFAULT '',
   latest_version TEXT NOT NULL,
@@ -125,6 +126,13 @@ async def connect(db_path: str) -> aiosqlite.Connection:
 
 async def init_db(conn: aiosqlite.Connection) -> None:
     await conn.executescript(SCHEMA_SQL)
+    # 迁移:老库补 license 列(幂等)
+    try:
+        await conn.execute(
+            "ALTER TABLE modules ADD COLUMN license TEXT NOT NULL DEFAULT 'MIT'"
+        )
+    except Exception:
+        pass  # 列已存在
     for key, value in DEFAULT_SETTINGS.items():
         await conn.execute(
             "INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (key, value)

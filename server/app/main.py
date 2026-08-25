@@ -68,6 +68,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def page_login():
         return FileResponse(STATIC_DIR / "login.html")
 
+    @app.get("/rules")
+    async def page_rules():
+        return FileResponse(STATIC_DIR / "rules.html")
+
     @app.get("/account")
     async def page_account():
         return FileResponse(STATIC_DIR / "me.html")

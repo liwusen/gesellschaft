@@ -65,7 +65,7 @@ function topbar(active) {
   inner.appendChild(brand);
 
   const links = el("div", "d-flex align-items-center gap-1");
-  [["/", "社区"], ["/market", "模块市场"], ["/account", "我的"]].forEach(([href, name]) => {
+  [["/", "社区"], ["/market", "模块市场"], ["/rules", "规范"], ["/account", "我的"]].forEach(([href, name]) => {
     const a = el("a", "gs-nav-link" + (active === href ? " active" : ""), name);
     a.href = href;
     links.appendChild(a);

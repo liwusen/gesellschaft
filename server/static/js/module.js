@@ -18,7 +18,8 @@ async function load() {
   head.appendChild(avatar);
   const mid = el("div", "flex-grow-1");
   mid.appendChild(el("h3", "fw-bold mb-1",
-    `${m.slug} <span class="badge-cat">v${m.latest_version}</span>`));
+    `${m.slug} <span class="badge-cat">v${m.latest_version}</span>` +
+    ` <span class="badge-cat">${m.license || "MIT"}</span>`));
   mid.appendChild(el("div", "text-muted small",
     `作者 @${m.owner_login} · 下载 ${m.download_count} · ${m.created_at}`));
   head.appendChild(mid);

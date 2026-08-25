@@ -147,7 +147,7 @@ async def list_modules(request: Request, q: str = "", mine: bool = False,
     total = (await cursor.fetchone())["c"]
     args.extend([page_size, (page - 1) * page_size])
     cursor = await conn.execute(
-        "SELECT m.slug, m.description, m.usage_text, m.latest_version,"
+        "SELECT m.slug, m.description, m.usage_text, m.latest_version, m.license,"
         " m.download_count, u.login AS owner_login, m.created_at"
         f" FROM modules m JOIN users u ON u.id=m.owner_user_id WHERE {where}"
         " ORDER BY m.id DESC LIMIT ? OFFSET ?", args
