@@ -28,10 +28,11 @@ async function load() {
   const list = document.getElementById("list");
   list.textContent = "";
   if (!ok) {
-    list.appendChild(el("div", "muted", status === 403 ? "论坛已关闭。" : "加载失败。"));
+    list.appendChild(el("div", "empty", status === 403 ? "论坛已关闭。" : "加载失败。"));
     return;
   }
-  if (!data.threads.length) list.appendChild(el("div", "muted", "(暂无帖子)"));
+  document.getElementById("stat-total").textContent = data.total;
+  if (!data.threads.length) list.appendChild(el("div", "empty", "(暂无帖子)"));
   data.threads.forEach(t => list.appendChild(threadItem(t)));
   state.totalPages = Math.max(1, Math.ceil(data.total / 20));
   document.getElementById("pageinfo").textContent =

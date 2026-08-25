@@ -1,4 +1,4 @@
-/* Gesellschaft 前端公共工具(仿 Configer 的轻量 DOM 助手) */
+/* Gesellschaft 前端公共工具(Configer 风格 DOM 助手 + v2 UI) */
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -25,42 +25,74 @@ async function api(path, options) {
   return { ok: resp.ok, status: resp.status, data };
 }
 
+/** 姓名 → 稳定的方形头像底色(仿 AstrBook 方形头像) */
+const AVATAR_COLORS = ["#3c96ca", "#5b8dd9", "#4fa3a1", "#7a9e5f", "#c98a4b", "#a06bb5"];
+function avatarTile(name) {
+  const initials = (name || "?").replace(/[@()]/g, "").slice(0, 2).toUpperCase();
+  let hash = 0;
+  for (const ch of String(name || "?")) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const color = AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  const tile = el("div", "avatar");
+  tile.style.background = color;
+  tile.textContent = initials;
+  tile.title = name;
+  return tile;
+}
+
 function topbar(active) {
-  const bar = el("div", "topbar");
-  const brand = el("a", "brand", "Gesellschaft");
+  const nav = el("nav", "navbar navbar-expand gs-nav");
+  const inner = el("div", "container gs-container");
+  inner.style.maxWidth = "1000px";
+  const brand = el("a", "navbar-brand gs-brand", "");
+  const dot = el("span", "dot");
+  brand.appendChild(dot);
+  brand.appendChild(document.createTextNode(" gesellschaft"));
   brand.href = "/";
-  bar.appendChild(brand);
-  const nav = el("nav");
-  [["/", "论坛"], ["/market", "模块市场"], ["/account", "我的"]].forEach(([href, name]) => {
-    const a = el("a", null, name);
+  inner.appendChild(brand);
+
+  const links = el("div", "d-flex align-items-center gap-1");
+  [["/", "社区"], ["/market", "模块市场"], ["/account", "我的"]].forEach(([href, name]) => {
+    const a = el("a", "gs-nav-link" + (active === href ? " active" : ""), name);
     a.href = href;
-    if (active === href) a.style.fontWeight = "600";
-    nav.appendChild(a);
+    links.appendChild(a);
   });
-  bar.appendChild(nav);
-  const spacer = el("div", "spacer");
-  bar.appendChild(spacer);
+  inner.appendChild(links);
+
+  const spacer = el("div", "ms-auto d-flex align-items-center");
+  inner.appendChild(spacer);
   api("/me/session").then(({ data }) => {
     const user = data && data.user;
     if (user) {
-      const a = el("a", null, "@" + user.login);
-      a.href = "/account";
-      bar.appendChild(a);
+      const chip = el("a", "gs-user-chip", "@" + user.login);
+      chip.href = "/account";
+      spacer.appendChild(chip);
     } else {
-      const a = el("a", null, "GitHub 登录");
-      a.href = "/login";
-      bar.appendChild(a);
+      const chip = el("a", "gs-user-chip", "GitHub 登录");
+      chip.href = "/login";
+      spacer.appendChild(chip);
     }
   });
-  document.body.prepend(bar);
+  nav.appendChild(inner);
+  document.body.prepend(nav);
 }
 
 function threadItem(t) {
   const item = el("div", "thread-item");
-  const title = el("a", "title", t.title);
+  const avatar = avatarTile(t.author);
+  item.appendChild(avatar);
+  const body = el("div", "thread-body");
+  const title = el("a", "thread-title", t.title);
   title.href = "/thread/" + t.id;
-  item.appendChild(title);
-  item.appendChild(el("div", "muted",
-    `${t.author} · ${t.category_name} · 赞 ${t.like_count} · 回复 ${t.reply_count} · ${t.created_at}`));
+  body.appendChild(title);
+  const meta = el("div", "thread-meta",
+    `${t.author} · ${t.created_at}`);
+  body.appendChild(meta);
+  const stats = el("div", "thread-stats");
+  const cat = el("span", "badge-cat", t.category_name || t.category);
+  const rc = el("span", "si", `💬 ${t.reply_count}`);
+  const lc = el("span", "si", `👍 ${t.like_count}`);
+  stats.append(cat, rc, lc);
+  body.appendChild(stats);
+  item.appendChild(body);
   return item;
 }

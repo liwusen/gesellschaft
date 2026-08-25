@@ -41,7 +41,7 @@ async function renderStats() {
   Object.entries(names).forEach(([k, name]) => {
     const c = el("div", "stat-card");
     c.appendChild(el("div", "num", String(data[k])));
-    c.appendChild(el("div", "muted", name));
+    c.appendChild(el("div", "text-muted", name));
     grid.appendChild(c);
   });
   body.appendChild(grid);
@@ -52,11 +52,12 @@ async function renderSwitches() {
   body.textContent = "";
   const { data } = await adminApi("/settings");
   [["forum_enabled", "论坛"], ["registry_enabled", "模块注册表"]].forEach(([k, name]) => {
-    const row = el("div", "row");
-    row.style.padding = "8px 0";
-    row.appendChild(el("span", null, `${name}: ${data[k] ? "开启" : "关闭"}`));
-    const btn = el("button", "btn small right", data[k] ? "关闭" : "开启");
-    btn.className = "btn small right " + (data[k] ? "danger" : "primary");
+    const row = el("div", "d-flex align-items-center py-2");
+    row.appendChild(el("span", "fw-semibold", `${name}: `));
+    row.appendChild(el("span", "badge-cat" + (data[k] ? "" : " text-danger"),
+      data[k] ? "开启" : "关闭"));
+    const btn = el("button", "btn-gs sm ms-auto " + (data[k] ? "danger" : "primary"),
+      data[k] ? "关闭" : "开启");
     btn.onclick = async () => {
       await adminApi("/settings", { method: "PATCH", json: { [k]: !data[k] } });
       renderSwitches();
@@ -94,7 +95,7 @@ async function renderContent() {
     const td = document.createElement("td");
     const t = data.threads[i - 1];
     if (!t.deleted) {
-      const btn = el("button", "btn small danger", "删除");
+      const btn = el("button", "btn-gs sm danger", "删除");
       btn.onclick = async () => {
         await adminApi("/threads/" + t.id, { method: "DELETE" });
         renderContent();
@@ -117,7 +118,7 @@ async function renderUsers() {
     if (i === 0) return;
     const u = data.users[i - 1];
     const td = document.createElement("td");
-    const btn = el("button", "btn small " + (u.banned ? "primary" : "danger"),
+    const btn = el("button", "btn-gs sm " + (u.banned ? "primary" : "danger"),
       u.banned ? "解封" : "封禁");
     btn.onclick = async () => {
       await adminApi(`/users/${u.id}/ban`, { method: "POST",
@@ -141,7 +142,7 @@ async function renderModules() {
     if (i === 0) return;
     const m = data.modules[i - 1];
     const td = document.createElement("td");
-    const btn = el("button", "btn small " + (m.taken_down ? "primary" : "danger"),
+    const btn = el("button", "btn-gs sm " + (m.taken_down ? "primary" : "danger"),
       m.taken_down ? "恢复" : "下架");
     btn.onclick = async () => {
       await adminApi(`/modules/${m.slug}/takedown`, { method: "POST",
@@ -160,13 +161,12 @@ async function renderCategories() {
   const cats = (await api("/categories")).data.categories;
   body.appendChild(table(["slug", "名称", "排序"],
     cats.map(c => [c.slug, c.name, ""])));
-  const form = el("form", "row");
-  form.style.marginTop = "12px";
+  const form = el("form", "d-flex gap-2 mt-3 flex-wrap");
   form.innerHTML =
-    '<input type="text" id="c-slug" placeholder="slug" style="width:120px">' +
-    '<input type="text" id="c-name" placeholder="显示名" style="width:120px">' +
-    '<input type="text" id="c-sort" placeholder="排序" style="width:60px">';
-  const add = el("button", "btn primary", "新增分类");
+    '<input type="text" class="form-control" id="c-slug" placeholder="slug" style="width:130px">' +
+    '<input type="text" class="form-control" id="c-name" placeholder="显示名" style="width:130px">' +
+    '<input type="text" class="form-control" id="c-sort" placeholder="排序" style="width:70px">';
+  const add = el("button", "btn-gs primary", "新增分类");
   add.type = "submit";
   form.appendChild(add);
   form.onsubmit = async (e) => {

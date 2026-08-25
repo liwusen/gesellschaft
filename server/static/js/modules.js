@@ -9,19 +9,24 @@ async function load() {
   const list = document.getElementById("list");
   list.textContent = "";
   if (!ok) {
-    list.appendChild(el("div", "muted", "模块注册表已关闭。"));
+    list.appendChild(el("div", "empty", "模块注册表已关闭。"));
     return;
   }
-  if (!data.modules.length) list.appendChild(el("div", "muted", "(暂无模块)"));
+  document.getElementById("stat-total").textContent = data.total;
+  if (!data.modules.length) list.appendChild(el("div", "empty", "(暂无模块)"));
   data.modules.forEach(m => {
     const item = el("div", "thread-item");
-    const title = el("a", "title",
-      `${m.slug} v${m.latest_version}`);
+    const avatar = avatarTile(m.slug);
+    item.appendChild(avatar);
+    const body = el("div", "thread-body");
+    const title = el("a", "thread-title", `${m.slug} v${m.latest_version}`);
     title.href = "/module/" + m.slug;
-    item.appendChild(title);
-    item.appendChild(el("div", null, m.description || ""));
-    item.appendChild(el("div", "muted",
-      `作者 ${m.owner_login} · 下载 ${m.download_count} · ${m.created_at}`));
+    body.appendChild(title);
+    if (m.description) body.appendChild(el("div", "mt-1", m.description));
+    const meta = el("div", "thread-meta",
+      `作者 @${m.owner_login} · 下载 ${m.download_count} · ${m.created_at}`);
+    body.appendChild(meta);
+    item.appendChild(body);
     list.appendChild(item);
   });
   totalPages = Math.max(1, Math.ceil(data.total / 20));
@@ -34,6 +39,9 @@ document.getElementById("search").onclick = () => {
   page = 1;
   load();
 };
+document.getElementById("q").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { q = document.getElementById("q").value.trim(); page = 1; load(); }
+});
 document.getElementById("prev").onclick = () => { if (page > 1) { page--; load(); } };
 document.getElementById("next").onclick = () => { if (page < totalPages) { page++; load(); } };
 

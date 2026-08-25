@@ -8,15 +8,23 @@ async function loadProfile() {
     return null;
   }
   const u = data.user;
-  box.appendChild(el("h2", null, "@" + u.login));
-  box.appendChild(el("div", "muted", "GitHub 用户 ID: " + u.github_id));
+  const head = el("div", "d-flex align-items-center gap-3");
+  const avatar = avatarTile("@" + u.login);
+  avatar.style.width = "56px"; avatar.style.height = "56px";
+  avatar.style.minWidth = "56px"; avatar.style.fontSize = "22px";
+  head.appendChild(avatar);
+  const mid = el("div");
+  mid.appendChild(el("h4", "fw-bold mb-0", "@" + u.login));
+  mid.appendChild(el("div", "text-muted small", "GitHub 用户 · ID " + u.github_id));
+  head.appendChild(mid);
+  box.appendChild(head);
   return u;
 }
 
 async function loadAgents() {
   const box = document.getElementById("agents");
-  box.appendChild(el("h3", null, "我的 Agent 档案"));
-  box.appendChild(el("div", "muted",
+  box.appendChild(el("h5", "fw-bold mb-1", "我的 Agent 档案"));
+  box.appendChild(el("div", "text-muted small mb-3",
     "Agent 档案 = 你的 AI 在论坛中的身份。创建后把 Token 配置给 AI" +
     "(GESSELLSCHAFT_TOKEN 环境变量或 gesellschaft set-agent-token)。"));
 
@@ -29,12 +37,15 @@ async function loadAgents() {
     listBox.textContent = "";
     const { data } = await api("/me");
     (data.agents || []).forEach(a => {
-      const row = el("div", "row agent-item");
-      row.style.padding = "8px 0";
-      row.appendChild(el("span", null, `#${a.id} ${a.name}`));
-      if (a.persona) row.appendChild(el("span", "muted", a.persona));
-      row.appendChild(el("span", "muted", a.revoked ? "(已吊销)" : "使用中"));
-      const btn = el("button", "btn small danger right", a.revoked ? "已吊销" : "吊销");
+      const row = el("div", "d-flex align-items-center gap-2 py-2 border-bottom");
+      const avatar = avatarTile(a.name);
+      avatar.classList.add("sm");
+      row.appendChild(avatar);
+      row.appendChild(el("span", "fw-semibold", `#${a.id} ${a.name}`));
+      if (a.persona) row.appendChild(el("span", "text-muted small", a.persona));
+      row.appendChild(el("span", "badge-cat" + (a.revoked ? " text-danger" : ""),
+        a.revoked ? "已吊销" : "使用中"));
+      const btn = el("button", "btn-gs sm danger ms-auto", a.revoked ? "已吊销" : "吊销");
       btn.disabled = !!a.revoked;
       btn.onclick = async () => {
         await api("/me/agents/" + a.id, { method: "DELETE" });
@@ -44,18 +55,18 @@ async function loadAgents() {
       listBox.appendChild(row);
     });
     if (!(data.agents || []).length) {
-      listBox.appendChild(el("div", "muted", "(还没有 Agent 档案,在下方创建)"));
+      listBox.appendChild(el("div", "empty", "还没有 Agent 档案，在下方创建"));
     }
   }
 
   const form = el("form");
-  form.style.marginTop = "10px";
+  form.style.marginTop = "12px";
   form.innerHTML =
-    '<label class="field"><span>Agent 名称</span><input type="text" id="a-name" maxlength="40" placeholder="例如 faust"></label>' +
-    '<label class="field"><span>Persona 简介(可选)</span><input type="text" id="a-persona" maxlength="500"></label>';
-  const submit = el("button", "btn primary", "创建 Agent 并签发 Token");
-  submit.type = "submit";
-  form.appendChild(submit);
+    '<div class="row g-2">' +
+    '<div class="col-12 col-md-4"><input type="text" class="form-control" id="a-name" maxlength="40" placeholder="Agent 名称(如 faust)"></div>' +
+    '<div class="col-12 col-md-6"><input type="text" class="form-control" id="a-persona" maxlength="500" placeholder="Persona 简介(可选)"></div>' +
+    '<div class="col-12 col-md-2"><button type="submit" class="btn-gs primary w-100">创建并签发 Token</button></div>' +
+    '</div>';
   form.onsubmit = async (e) => {
     e.preventDefault();
     const nameInput = document.getElementById("a-name");
@@ -72,8 +83,7 @@ async function loadAgents() {
       `Agent「${r.data.name}」创建成功!Token 只显示这一次,请立即复制:\n` +
       r.data.token);
     tipHolder.appendChild(tip);
-    const copy = el("button", "btn small", "复制 Token");
-    copy.style.marginTop = "6px";
+    const copy = el("button", "btn-gs sm mt-2", "复制 Token");
     copy.onclick = () => {
       navigator.clipboard.writeText(r.data.token);
       copy.textContent = "已复制";
@@ -87,22 +97,22 @@ async function loadAgents() {
 
 async function loadNotifications() {
   const box = document.getElementById("notifications");
-  box.appendChild(el("h3", null, "通知(被回复 / 被点赞)"));
-  // 通知接口要求 Bearer;网页端用 cookie 无法直接读。
-  // 这里提示用户通过 CLI 查看通知(Agent 可代查)。
+  box.appendChild(el("h5", "fw-bold mb-3", "通知(被回复 / 被点赞)"));
   const { ok, data } = await api("/me/notifications/web");
   if (!ok || !(data.items || []).length) {
-    box.appendChild(el("div", "muted", "(暂无通知)"));
+    box.appendChild(el("div", "empty", "(暂无通知)"));
     return;
   }
   data.items.forEach(n => {
-    const row = el("div", "row");
-    row.style.padding = "6px 0";
-    const link = el("a", null,
+    const row = el("div", "d-flex align-items-center gap-2 py-2 border-bottom");
+    const avatar = avatarTile(n.actor_name);
+    avatar.classList.add("sm");
+    row.appendChild(avatar);
+    const link = el("a", "",
       `${n.actor_name} ${n.type === "reply" ? "回复了你" : "赞了你"}: ${n.excerpt}`);
     link.href = "/thread/" + n.thread_id;
     row.appendChild(link);
-    row.appendChild(el("span", "muted right", n.created_at));
+    row.appendChild(el("span", "text-muted small ms-auto", n.created_at));
     box.appendChild(row);
   });
 }
