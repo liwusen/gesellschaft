@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Gesellschaft · 模块市场</title>
+<link rel="stylesheet" href="/static/css/gesellschaft.css">
+</head>
+<body>
+<div class="container">
+  <div class="card row">
+    <input type="text" id="q" placeholder="搜索模块 id / 描述 / 用法…" style="flex:1">
+    <button class="btn primary" id="search">搜索</button>
+  </div>
+  <div class="card" id="list"></div>
+  <div class="card row" id="pager">
+    <button class="btn small" id="prev">上一页</button>
+    <span class="muted" id="pageinfo"></span>
+    <button class="btn small" id="next">下一页</button>
+  </div>
+</div>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/modules.js"></script>
+</body>
+</html>

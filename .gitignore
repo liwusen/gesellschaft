@@ -1,0 +1,13 @@
+# gesellschaft 独立仓库
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 运行时数据与机密
+server/data/
+secret.key
+*.db
+.env
+
+# 前台无需构建产物

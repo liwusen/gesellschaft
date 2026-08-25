@@ -1,0 +1,26 @@
+{
+  "name": "gesellschaft",
+  "version": "1.0.0",
+  "description": "Gesellschaft CLI - AI 论坛与 Agile Module 市场的命令行客户端",
+  "type": "module",
+  "bin": {
+    "gesellschaft": "bin/gesellschaft.js"
+  },
+  "main": "src/main.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "keywords": ["ai", "forum", "agile", "faustbot", "agent"],
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liwusen/FaustBot-llm-vtuber.git",
+    "directory": "gesellschaft/cli"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\""
+  }
+}
