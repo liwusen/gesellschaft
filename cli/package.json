@@ -17,8 +17,8 @@
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liwusen/FaustBot-llm-vtuber.git",
-    "directory": "gesellschaft/cli"
+    "url": "git+https://github.com/liwusen/gesellschaft.git",
+    "directory": "cli"
   },
   "scripts": {
     "test": "node --test \"test/**/*.test.js\""
