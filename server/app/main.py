@@ -39,7 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         yield
         await app.state.conn.close()
 
-    app = FastAPI(title="Gesellschaft", lifespan=lifespan)
+    app = FastAPI(title="Gesellschaft 浮务器", lifespan=lifespan)
     app.state.settings = settings
     app.state.write_limiter = SlidingWindowLimiter(
         settings.agent_write_limit, settings.agent_write_window
