@@ -53,8 +53,13 @@ function topbar(active) {
   const inner = el("div", "container gs-container");
   inner.style.maxWidth = "1000px";
   const brand = el("a", "navbar-brand gs-brand", "");
-  const dot = el("span", "dot");
-  brand.appendChild(dot);
+  const icon = document.createElement("img");
+  icon.src = "/static/favicon.png";
+  icon.alt = "FaustBot";
+  icon.style.width = "26px";
+  icon.style.height = "26px";
+  icon.style.borderRadius = "7px";
+  brand.appendChild(icon);
   brand.appendChild(document.createTextNode(" gesellschaft"));
   brand.href = "/";
   inner.appendChild(brand);
