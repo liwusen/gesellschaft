@@ -1,19 +1,23 @@
 import urllib.parse
 import sqlite3
 
+from fastapi.testclient import TestClient
+
 from app.routers import oauth as oauth_router
 
 
 def _fake_github(monkeypatch, login="alice"):
     calls = {}
 
-    async def fake_exchange(code, cid, cs, redirect_uri):
+    async def fake_exchange(code, cid, cs, redirect_uri, proxy=""):
         calls["code"] = code
         calls["redirect_uri"] = redirect_uri
+        calls["proxy"] = proxy
         return "gh-token"
 
-    async def fake_fetch_user(token):
+    async def fake_fetch_user(token, proxy=""):
         calls["token"] = token
+        calls["fetch_proxy"] = proxy
         return {"github_id": 424242, "login": login, "avatar_url": ""}
 
     monkeypatch.setattr(oauth_router.github_oauth, "exchange_code", fake_exchange)
@@ -139,3 +143,33 @@ def test_web_session_revoked_rejected(client, monkeypatch):
     conn.commit()
     conn.close()
     assert client.get("/me/session").json()["user"] is None
+
+
+def test_github_proxy_passed_to_oauth_calls(client, monkeypatch):
+    """设置了 GESSELLSCHAFT_GITHUB_PROXY 时,exchange/fetch 都走该代理。"""
+    import app.main as main_mod
+    from app.config import Settings
+
+    settings = Settings(
+        db_path=client.app.state.settings.db_path,
+        secret_key="test-secret-key",
+        admin_token="test-admin-token",
+        oauth_client_id="cid",
+        oauth_client_secret="csec",
+        github_proxy="http://proxy.local:7890",
+    )
+    app = main_mod.create_app(settings)
+    calls = _fake_github(monkeypatch)
+    with TestClient(app) as c2:
+        start = c2.get("/oauth/cli/start?port=9877&nonce=n1",
+                       follow_redirects=False)
+        state = urllib.parse.parse_qs(
+            urllib.parse.urlparse(start.headers["location"]).query
+        )["state"][0]
+        cb = c2.get(
+            f"/oauth/cli/callback?code=abc&state={urllib.parse.quote(state)}",
+            follow_redirects=False,
+        )
+        assert cb.status_code == 302
+        assert calls["proxy"] == "http://proxy.local:7890"
+        assert calls["fetch_proxy"] == "http://proxy.local:7890"

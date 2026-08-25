@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     public_base_url: str = "http://127.0.0.1:8787"
     oauth_client_id: str = ""
     oauth_client_secret: str = ""
+    github_proxy: str = ""
     admin_token: str = "dev-admin-token"
     db_path: str = str(SERVER_DIR / "data" / "gesellschaft.db")
     secret_key: str = ""

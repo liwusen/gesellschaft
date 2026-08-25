@@ -46,8 +46,9 @@ async def _complete_login(request: Request, code: str) -> dict | None:
             settings.oauth_client_id,
             settings.oauth_client_secret,
             settings.public_base_url.rstrip("/") + "/oauth/cli/callback",
+            settings.github_proxy,
         )
-        return await github_oauth.fetch_user(access_token)
+        return await github_oauth.fetch_user(access_token, settings.github_proxy)
     except github_oauth.GitHubOAuthError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 

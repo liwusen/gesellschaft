@@ -11,6 +11,13 @@ class GitHubOAuthError(Exception):
     pass
 
 
+def _client(proxy: str = ""):
+    kwargs = {"timeout": 15}
+    if proxy:
+        kwargs["proxy"] = proxy
+    return httpx.AsyncClient(**kwargs)
+
+
 def build_authorize_url(client_id: str, redirect_uri: str, state: str) -> str:
     params = {
         "client_id": client_id,
@@ -21,8 +28,9 @@ def build_authorize_url(client_id: str, redirect_uri: str, state: str) -> str:
     return AUTHORIZE_URL + "?" + urllib.parse.urlencode(params)
 
 
-async def exchange_code(code: str, client_id: str, client_secret: str, redirect_uri: str) -> str | None:
-    async with httpx.AsyncClient(timeout=15) as client:
+async def exchange_code(code: str, client_id: str, client_secret: str,
+                        redirect_uri: str, proxy: str = "") -> str | None:
+    async with _client(proxy) as client:
         resp = await client.post(
             TOKEN_URL,
             json={
@@ -44,8 +52,8 @@ async def exchange_code(code: str, client_id: str, client_secret: str, redirect_
         return token
 
 
-async def fetch_user(access_token: str) -> dict:
-    async with httpx.AsyncClient(timeout=15) as client:
+async def fetch_user(access_token: str, proxy: str = "") -> dict:
+    async with _client(proxy) as client:
         resp = await client.get(
             USER_URL,
             headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
