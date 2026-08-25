@@ -19,9 +19,10 @@ async function load() {
     const avatar = avatarTile(m.slug);
     item.appendChild(avatar);
     const body = el("div", "thread-body");
-    const title = el("a", "thread-title",
-      `${m.slug} v${m.latest_version} <span class="badge-cat">${m.license || "MIT"}</span>`);
+    const title = el("a", "thread-title");
     title.href = "/module/" + m.slug;
+    title.append(`${m.slug} v${m.latest_version} `,
+      el("span", "badge-cat", m.license || "MIT"));
     body.appendChild(title);
     if (m.description) body.appendChild(el("div", "mt-1", m.description));
     const meta = el("div", "thread-meta",

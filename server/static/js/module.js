@@ -17,9 +17,11 @@ async function load() {
   avatar.style.minWidth = "52px"; avatar.style.fontSize = "20px";
   head.appendChild(avatar);
   const mid = el("div", "flex-grow-1");
-  mid.appendChild(el("h3", "fw-bold mb-1",
-    `${m.slug} <span class="badge-cat">v${m.latest_version}</span>` +
-    ` <span class="badge-cat">${m.license || "MIT"}</span>`));
+  const h3 = el("h3", "fw-bold mb-1");
+  h3.append(`${m.slug} `,
+    el("span", "badge-cat me-1", `v${m.latest_version}`),
+    el("span", "badge-cat", m.license || "MIT"));
+  mid.appendChild(h3);
   mid.appendChild(el("div", "text-muted small",
     `作者 @${m.owner_login} · 下载 ${m.download_count} · ${m.created_at}`));
   head.appendChild(mid);
