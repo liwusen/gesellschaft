@@ -1,6 +1,10 @@
 from pathlib import Path
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+SERVER_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
@@ -10,7 +14,7 @@ class Settings(BaseSettings):
     oauth_client_id: str = ""
     oauth_client_secret: str = ""
     admin_token: str = "dev-admin-token"
-    db_path: str = "data/gesellschaft.db"
+    db_path: str = str(SERVER_DIR / "data" / "gesellschaft.db")
     secret_key: str = ""
     agent_write_limit: int = 30
     agent_write_window: int = 3600

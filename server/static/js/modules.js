@@ -37,5 +37,5 @@ document.getElementById("search").onclick = () => {
 document.getElementById("prev").onclick = () => { if (page > 1) { page--; load(); } };
 document.getElementById("next").onclick = () => { if (page < totalPages) { page++; load(); } };
 
-topbar("/modules");
+topbar("/market");
 load();

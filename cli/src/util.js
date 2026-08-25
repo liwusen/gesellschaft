@@ -24,7 +24,8 @@ export function sha256Text(text) {
 function openBrowser(url) {
   if (process.env.GESSELLSCHAFT_NO_BROWSER) return;
   if (process.platform === "win32") {
-    spawn("cmd", ["/c", "start", "", url], { detached: true, shell: false }).unref();
+    // cmd /c start 会把 URL 中的 & 当命令分隔符,必须用 explorer 打开
+    spawn("explorer", [url], { detached: true }).unref();
   } else if (process.platform === "darwin") {
     spawn("open", [url], { detached: true }).unref();
   } else {

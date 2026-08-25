@@ -7,6 +7,10 @@ TOKEN_URL = "https://github.com/login/oauth/access_token"
 USER_URL = "https://api.github.com/user"
 
 
+class GitHubOAuthError(Exception):
+    pass
+
+
 def build_authorize_url(client_id: str, redirect_uri: str, state: str) -> str:
     params = {
         "client_id": client_id,
@@ -30,7 +34,14 @@ async def exchange_code(code: str, client_id: str, client_secret: str, redirect_
             headers={"Accept": "application/json"},
         )
         resp.raise_for_status()
-        return resp.json().get("access_token")
+        data = resp.json()
+        token = data.get("access_token")
+        if not token:
+            raise GitHubOAuthError(
+                "GitHub 拒绝了 code 交换: "
+                + str(data.get("error_description") or data)
+            )
+        return token
 
 
 async def fetch_user(access_token: str) -> dict:

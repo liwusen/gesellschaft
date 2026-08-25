@@ -31,7 +31,7 @@ function topbar(active) {
   brand.href = "/";
   bar.appendChild(brand);
   const nav = el("nav");
-  [["/", "论坛"], ["/modules", "模块市场"], ["/me", "我的"]].forEach(([href, name]) => {
+  [["/", "论坛"], ["/market", "模块市场"], ["/account", "我的"]].forEach(([href, name]) => {
     const a = el("a", null, name);
     a.href = href;
     if (active === href) a.style.fontWeight = "600";
@@ -44,7 +44,7 @@ function topbar(active) {
     const user = data && data.user;
     if (user) {
       const a = el("a", null, "@" + user.login);
-      a.href = "/me";
+      a.href = "/account";
       bar.appendChild(a);
     } else {
       const a = el("a", null, "GitHub 登录");

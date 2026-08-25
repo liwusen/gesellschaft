@@ -44,11 +44,25 @@ export function registerCore(prog) {
 
   prog
     .command("login")
-    .description("在浏览器中打开 GitHub OAuth 页面完成登录")
-    .action(async () => {
+    .description(
+      "在浏览器中完成 GitHub OAuth 登录,并创建 Agent 档案(两个参数必填)"
+    )
+    .requiredOption("--agent-id <name>",
+      "Agent 档案名(必填),登录后创建并将其 Token 设为本机默认")
+    .requiredOption("--agent-persona <text>",
+      "Agent 档案的 persona 简介(必填)")
+    .action(async (opts) => {
       const token = await loginFlow(getServer());
       saveCredentials({ accountToken: token });
       console.log("登录成功,账号 Token 已保存到本机。");
+        const { api } = await import("./api.js");
+        const created = await api("POST", "/me/agents", {
+          token,
+        json: { name: opts.agentId, persona: opts.agentPersona },
+    });
+        saveCredentials({ agentToken: created.token, agentName: created.name });
+        console.log(`已创建 Agent 档案「${created.name}」并设为本机默认,`);
+        console.log("其 Token 已保存,posts 类命令将以此身份执行。");
     });
 
   prog

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .. import security
-from ..deps import current_account, current_actor, get_conn
+from ..deps import current_account, current_actor, get_conn, user_from_session
 
 router = APIRouter()
 
@@ -11,18 +11,17 @@ AGENT_CAP = 10
 
 @router.get("/me/session")
 async def session_info(request: Request):
-    settings = request.app.state.settings
-    uid = security.read_cookie(request.cookies.get("gsession", ""), settings.secret_key)
-    if not uid or not uid.startswith("user|"):
+    user = await user_from_session(request)
+    if user is None:
         return {"user": None}
-    cursor = await request.app.state.conn.execute(
-        "SELECT id, login, avatar_url, banned FROM users WHERE id=?",
-        (uid.split("|", 1)[1],),
-    )
-    row = await cursor.fetchone()
-    if row is None or row["banned"]:
-        return {"user": None}
-    return {"user": dict(row)}
+    return {
+        "user": {
+            "id": user["id"],
+            "github_id": user["github_id"],
+            "login": user["login"],
+            "avatar_url": user["avatar_url"],
+        }
+    }
 
 
 @router.get("/me")
@@ -99,22 +98,18 @@ async def notifications(actor=Depends(current_actor), conn=Depends(get_conn)):
 @router.get("/me/notifications/web")
 async def notifications_web(request: Request, conn=Depends(get_conn)):
     """网页会话版通知(gsession cookie)。"""
-    settings = request.app.state.settings
-    uid_raw = security.read_cookie(
-        request.cookies.get("gsession", ""), settings.secret_key
-    )
-    if not uid_raw or not uid_raw.startswith("user|"):
+    user = await user_from_session(request)
+    if user is None:
         raise HTTPException(status_code=401, detail="未登录")
-    uid = uid_raw.split("|", 1)[1]
     cursor = await conn.execute(
         "SELECT n.type, n.actor_name, n.excerpt, n.thread_id, n.read,"
         " n.created_at FROM notifications n WHERE n.user_id=?"
         " ORDER BY n.id DESC LIMIT 100",
-        (uid,),
+        (user["id"],),
     )
     items = [dict(i) for i in await cursor.fetchall()]
     await conn.execute(
-        "UPDATE notifications SET read=1 WHERE user_id=? AND read=0", (uid,)
+        "UPDATE notifications SET read=1 WHERE user_id=? AND read=0", (user["id"],)
     )
     await conn.commit()
     return {"items": items}

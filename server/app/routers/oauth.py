@@ -1,6 +1,8 @@
 import urllib.parse
+import secrets
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 
 from .. import github_oauth, security
@@ -9,6 +11,10 @@ router = APIRouter()
 
 ACCOUNT_TTL = 90 * 24 * 3600
 SESSION_TTL = 30 * 24 * 3600
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _safe_next(next_path: str) -> str:
@@ -34,24 +40,25 @@ async def upsert_user(conn, info: dict):
 
 async def _complete_login(request: Request, code: str) -> dict | None:
     settings = request.app.state.settings
-    access_token = await github_oauth.exchange_code(
-        code,
-        settings.oauth_client_id,
-        settings.oauth_client_secret,
-        settings.public_base_url.rstrip("/") + "/oauth/cli/callback",
-    )
-    if not access_token:
-        return None
-    return await github_oauth.fetch_user(access_token)
+    try:
+        access_token = await github_oauth.exchange_code(
+            code,
+            settings.oauth_client_id,
+            settings.oauth_client_secret,
+            settings.public_base_url.rstrip("/") + "/oauth/cli/callback",
+        )
+        return await github_oauth.fetch_user(access_token)
+    except github_oauth.GitHubOAuthError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
 
 
 @router.get("/oauth/cli/start")
 async def cli_start(request: Request, port: int, nonce: str = ""):
     settings = request.app.state.settings
     if not (1024 <= port <= 65535):
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=400, detail="port 无效")
+    if not nonce:
+        raise HTTPException(status_code=400, detail="nonce 不能为空")
     state = security.make_cookie(f"cli|{port}|{nonce}", settings.secret_key, 600)
     url = github_oauth.build_authorize_url(
         settings.oauth_client_id,
@@ -113,9 +120,17 @@ async def web_callback(request: Request, code: str = "", state: str = ""):
     if info is None:
         raise HTTPException(status_code=502, detail="GitHub 未返回 access_token")
     user = await upsert_user(conn, info)
-    session = security.make_cookie(f"user|{user['id']}", settings.secret_key, SESSION_TTL)
+    session_id = "gs-" + secrets.token_hex(20)
+    expires_at = (datetime.now(timezone.utc) + timedelta(seconds=SESSION_TTL)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    await conn.execute(
+        "INSERT INTO sessions(id, user_id, expires_at) VALUES(?,?,?)",
+        (session_id, user["id"], expires_at),
+    )
+    await conn.commit()
     resp = RedirectResponse(next_path, status_code=303)
     resp.set_cookie(
-        "gsession", session, max_age=SESSION_TTL, httponly=True, samesite="lax"
+        "gsession", session_id, max_age=SESSION_TTL, httponly=True, samesite="lax"
     )
     return resp

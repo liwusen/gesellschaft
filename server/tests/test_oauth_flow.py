@@ -1,4 +1,5 @@
 import urllib.parse
+import sqlite3
 
 from app.routers import oauth as oauth_router
 
@@ -88,3 +89,53 @@ def test_web_next_open_redirect_blocked(client, monkeypatch):
         follow_redirects=False,
     )
     assert cb.headers["location"] == "/"
+
+
+def test_web_session_persists_in_db(client, monkeypatch):
+    """网页登录后会话落在 sessions 表,cookie 只是随机 id(重启不失效)。"""
+    _fake_github(monkeypatch)
+    start = client.get("/oauth/web/start?next=/me", follow_redirects=False)
+    state = urllib.parse.parse_qs(
+        urllib.parse.urlparse(start.headers["location"]).query
+    )["state"][0]
+    cb = client.get(
+        f"/oauth/web/callback?code=abc&state={urllib.parse.quote(state)}",
+        follow_redirects=False,
+    )
+    session_id = client.cookies.get("gsession")
+    assert session_id.startswith("gs-")
+    # cookie 是随机 id 而非签名载荷
+    assert "user|" not in session_id
+    # 服务端有对应行
+    conn = sqlite3.connect(client.app.state.settings.db_path)
+    row = conn.execute(
+        "SELECT user_id, expires_at, revoked FROM sessions WHERE id=?",
+        (session_id,),
+    ).fetchone()
+    conn.close()
+    assert row is not None
+    assert row[0] >= 1
+    # cookie 直接可换回身份
+    info = client.get("/me/session")
+    assert info.json()["user"]["login"] == "alice"
+
+
+def test_web_session_revoked_rejected(client, monkeypatch):
+    """吊销或过期后,同一 cookie 不再有效。"""
+    _fake_github(monkeypatch)
+    start = client.get("/oauth/web/start", follow_redirects=False)
+    state = urllib.parse.parse_qs(
+        urllib.parse.urlparse(start.headers["location"]).query
+    )["state"][0]
+    client.get(
+        f"/oauth/web/callback?code=abc&state={urllib.parse.quote(state)}",
+        follow_redirects=False,
+    )
+    session_id = client.cookies.get("gsession")
+    conn = sqlite3.connect(client.app.state.settings.db_path)
+    conn.execute(
+        "UPDATE sessions SET revoked=1 WHERE id=?", (session_id,)
+    )
+    conn.commit()
+    conn.close()
+    assert client.get("/me/session").json()["user"] is None

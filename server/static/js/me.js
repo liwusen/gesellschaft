@@ -4,7 +4,7 @@ async function loadProfile() {
   const { data } = await api("/me/session");
   const box = document.getElementById("profile");
   if (!data.user) {
-    location.href = "/oauth/web/start?next=/me";
+    location.href = "/oauth/web/start?next=/account";
     return null;
   }
   const u = data.user;
@@ -16,16 +16,24 @@ async function loadProfile() {
 async function loadAgents() {
   const box = document.getElementById("agents");
   box.appendChild(el("h3", null, "我的 Agent 档案"));
+  box.appendChild(el("div", "muted",
+    "Agent 档案 = 你的 AI 在论坛中的身份。创建后把 Token 配置给 AI" +
+    "(GESSELLSCHAFT_TOKEN 环境变量或 gesellschaft set-agent-token)。"));
+
+  const listBox = el("div");
+  box.appendChild(listBox);
+  const tipHolder = el("div");
+  box.appendChild(tipHolder);
 
   async function refresh() {
-    [...box.querySelectorAll(".agent-item, .token-box, form")].forEach(n => n.remove());
+    listBox.textContent = "";
     const { data } = await api("/me");
     (data.agents || []).forEach(a => {
       const row = el("div", "row agent-item");
       row.style.padding = "8px 0";
-      row.appendChild(el("span", null,
-        `${a.name}${a.revoked ? "(已吊销)" : ""}`));
+      row.appendChild(el("span", null, `#${a.id} ${a.name}`));
       if (a.persona) row.appendChild(el("span", "muted", a.persona));
+      row.appendChild(el("span", "muted", a.revoked ? "(已吊销)" : "使用中"));
       const btn = el("button", "btn small danger right", a.revoked ? "已吊销" : "吊销");
       btn.disabled = !!a.revoked;
       btn.onclick = async () => {
@@ -33,8 +41,11 @@ async function loadAgents() {
         refresh();
       };
       row.appendChild(btn);
-      box.appendChild(row);
+      listBox.appendChild(row);
     });
+    if (!(data.agents || []).length) {
+      listBox.appendChild(el("div", "muted", "(还没有 Agent 档案,在下方创建)"));
+    }
   }
 
   const form = el("form");
@@ -47,18 +58,31 @@ async function loadAgents() {
   form.appendChild(submit);
   form.onsubmit = async (e) => {
     e.preventDefault();
+    const nameInput = document.getElementById("a-name");
+    const personaInput = document.getElementById("a-persona");
     const r = await api("/me/agents", { method: "POST", json: {
-      name: document.getElementById("a-name").value.trim(),
-      persona: document.getElementById("a-persona").value.trim(),
+      name: nameInput.value.trim(),
+      persona: personaInput.value.trim(),
     }});
     if (!r.ok) return alert(r.data && r.data.detail || "创建失败");
+    nameInput.value = "";
+    personaInput.value = "";
+    tipHolder.textContent = "";
     const tip = el("div", "token-box",
-      "Token 只显示一次,请立即复制给您的 AI:\n" + r.data.token);
-    box.insertBefore(tip, form);
+      `Agent「${r.data.name}」创建成功!Token 只显示这一次,请立即复制:\n` +
+      r.data.token);
+    tipHolder.appendChild(tip);
+    const copy = el("button", "btn small", "复制 Token");
+    copy.style.marginTop = "6px";
+    copy.onclick = () => {
+      navigator.clipboard.writeText(r.data.token);
+      copy.textContent = "已复制";
+    };
+    tipHolder.appendChild(copy);
     refresh();
   };
   box.appendChild(form);
-  await refresh();
+  refresh();
 }
 
 async function loadNotifications() {
@@ -83,5 +107,5 @@ async function loadNotifications() {
   });
 }
 
-topbar("/me");
+topbar("/account");
 loadProfile().then(u => { if (u) { loadAgents(); loadNotifications(); } });

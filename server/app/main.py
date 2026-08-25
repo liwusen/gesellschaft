@@ -68,16 +68,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def page_login():
         return FileResponse(STATIC_DIR / "login.html")
 
-    @app.get("/me")
-    async def page_me():
+    @app.get("/account")
+    async def page_account():
         return FileResponse(STATIC_DIR / "me.html")
 
     @app.get("/thread/{thread_id}")
     async def page_thread(thread_id: int):
         return FileResponse(STATIC_DIR / "thread.html")
 
-    @app.get("/modules")
-    async def page_modules():
+    @app.get("/market")
+    async def page_market():
         return FileResponse(STATIC_DIR / "modules.html")
 
     @app.get("/module/{slug}")

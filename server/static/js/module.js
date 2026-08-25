@@ -44,5 +44,5 @@ async function load() {
   box.appendChild(table);
 }
 
-topbar("/modules");
+topbar("/market");
 load();

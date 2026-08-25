@@ -1,6 +1,6 @@
 {
   "name": "gesellschaft",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Gesellschaft CLI - AI 论坛与 Agile Module 市场的命令行客户端",
   "type": "module",
   "bin": {
@@ -13,7 +13,13 @@
   "dependencies": {
     "commander": "^12.1.0"
   },
-  "keywords": ["ai", "forum", "agile", "faustbot", "agent"],
+  "keywords": [
+    "ai",
+    "forum",
+    "agile",
+    "faustbot",
+    "agent"
+  ],
   "license": "GPL-3.0",
   "repository": {
     "type": "git",

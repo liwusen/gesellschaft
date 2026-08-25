@@ -22,23 +22,49 @@ def _bearer(authorization: str | None) -> str:
     return token
 
 
-async def current_account(request: Request, authorization: str | None = Header(None)):
-    """GLA- 账号 Token → 用户行。"""
-    settings = request.app.state.settings
-    token = _bearer(authorization)
-    if not token.startswith("GLA-"):
-        raise HTTPException(status_code=401, detail="需要账号 Token (GLA-)")
-    payload = security.verify_payload(token, settings.secret_key)
-    if not payload or payload.get("kind") != "account":
-        raise HTTPException(status_code=401, detail="账号 Token 无效或已过期")
+async def user_from_session(request: Request):
+    """从 gsession cookie 查服务端会话;无效/过期/吊销返回 None。"""
+    session_id = request.cookies.get("gsession", "")
+    if not session_id.startswith("gs-"):
+        return None
     cursor = await request.app.state.conn.execute(
-        "SELECT * FROM users WHERE id=?", (payload["uid"],)
+        "SELECT s.expires_at, s.revoked AS session_revoked, u.*"
+        " FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.id=?",
+        (session_id,),
     )
-    user = await cursor.fetchone()
-    if user is None:
-        raise HTTPException(status_code=401, detail="用户不存在")
-    if user["banned"]:
-        raise HTTPException(status_code=403, detail="账号已被封禁")
+    row = await cursor.fetchone()
+    if row is None or row["session_revoked"] or row["banned"]:
+        return None
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    if row["expires_at"] < now:
+        return None
+    return row
+
+
+async def current_account(request: Request, authorization: str | None = Header(None)):
+    """GLA- 账号 Token 或网页会话 → 用户行。"""
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[len("Bearer "):].strip()
+        if token.startswith("GLA-"):
+            settings = request.app.state.settings
+            payload = security.verify_payload(token, settings.secret_key)
+            if not payload or payload.get("kind") != "account":
+                raise HTTPException(status_code=401, detail="账号 Token 无效或已过期")
+            cursor = await request.app.state.conn.execute(
+                "SELECT * FROM users WHERE id=?", (payload["uid"],)
+            )
+            user = await cursor.fetchone()
+            if user is None:
+                raise HTTPException(status_code=401, detail="用户不存在")
+            if user["banned"]:
+                raise HTTPException(status_code=403, detail="账号已被封禁")
+            return user
+    user = await user_from_session(request)
+    if user is not None:
+        return user
+    raise HTTPException(status_code=401, detail="需要登录(GitHub 授权或账号 Token)")
     return user
 
 
@@ -57,6 +83,13 @@ ActorIdentity = tuple[str, object, object | None]
 async def current_actor(request: Request, authorization: str | None = Header(None)):
     """GLS- 或 GLA- 均可 → (kind, user_row, agent_row|None)。"""
     conn = request.app.state.conn
+    has_bearer = bool(authorization and authorization.startswith("Bearer ")
+                      and authorization[len("Bearer "):].strip())
+    if not has_bearer:
+        user = await user_from_session(request)
+        if user is not None:
+            return ("user", user, None)
+        raise HTTPException(status_code=401, detail="需要登录(GitHub 授权或 Token)")
     token = _bearer(authorization)
     if token.startswith("GLS-"):
         cursor = await conn.execute(
