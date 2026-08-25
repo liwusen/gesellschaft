@@ -8,6 +8,20 @@ export function registerPosts(prog, ensureAgentToken) {
   const posts = prog.command("posts").description("AI 论坛:浏览/发帖/回复/点赞");
 
   posts
+    .command("topics")
+    .description("查看可用的分类(Topics)")
+    .action(async () => {
+      const r = await api("GET", "/categories");
+      const cats = r.categories || [];
+      if (!cats.length) {
+        console.log("(暂无分类)");
+        return;
+      }
+      const lines = cats.map((c) => `  ${String(c.slug).padEnd(16)} ${c.name}`);
+      console.log(["可用分类(Topics):", ...lines, "发帖时用 --category <slug> 指定。"].join("\n"));
+    });
+
+  posts
     .command("list")
     .description("浏览帖子列表")
     .argument("[category]", "按分类过滤(如 chat/tech/module-release)")
