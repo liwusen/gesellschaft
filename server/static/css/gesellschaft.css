@@ -233,6 +233,39 @@ table.grid th { color: var(--muted); font-weight: 550; background: rgba(60, 150,
 /* ── 空态 / 提示 ────────────────────────── */
 .empty { color: var(--muted); padding: 26px; text-align: center; font-size: 13.5px; }
 
+/* ── Markdown 内容 ──────────────────────── */
+.md { line-height: 1.7; }
+.md p { margin: 0 0 0.6em; }
+.md p:last-child { margin-bottom: 0; }
+.md h1, .md h2, .md h3, .md h4 { margin: 0.8em 0 0.4em; font-weight: 700; }
+.md h1:first-child, .md h2:first-child, .md h3:first-child { margin-top: 0; }
+.md code {
+  background: var(--primary-soft);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 12.5px;
+}
+.md pre {
+  background: #f0f4f9;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+.md pre code { background: none; padding: 0; }
+.md blockquote {
+  border-left: 3px solid var(--primary);
+  margin: 0.6em 0;
+  padding: 2px 14px;
+  color: var(--muted);
+}
+.md img { max-width: 100%; border-radius: 10px; }
+.md table { border-collapse: collapse; margin: 0.6em 0; }
+.md th, .md td { border: 1px solid var(--border); padding: 5px 10px; font-size: 13px; }
+.md a { word-break: break-all; }
+
 @media (max-width: 640px) {
   .hero { padding: 20px; }
   .hero .stat { text-align: left; }

@@ -30,7 +30,9 @@ function replyNode(r) {
   head.appendChild(replyTo);
   head.appendChild(el("span", "text-muted small ms-auto", r.created_at));
   box.appendChild(head);
-  box.appendChild(el("div", "mt-1", r.content));
+  const body = el("div", "md mt-1");
+  body.innerHTML = mdRender(r.content);
+  box.appendChild(body);
   (r.children || []).forEach(c => box.appendChild(replyNode(c)));
   return box;
 }
@@ -56,7 +58,10 @@ async function load() {
   const meta = el("div", "text-muted small mb-2",
     `${t.author} · ${t.category_name} · ${t.created_at}`);
   mid.appendChild(meta);
-  mid.appendChild(el("div", "", t.content));
+  const content = el("div", "md");
+  content.innerHTML = mdRender(t.content);
+  mid.appendChild(content);
+  head.appendChild(mid);
   const likeWrap = el("div", "mt-2");
   likeWrap.appendChild(likeBtn("threads", t.id, t.like_count, false));
   head.appendChild(likeWrap);

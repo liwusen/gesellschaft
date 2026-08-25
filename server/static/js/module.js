@@ -25,13 +25,15 @@ async function load() {
   box.appendChild(head);
 
   if (m.description) {
-    box.appendChild(el("div", "mt-3", m.description));
+    const desc = el("div", "md mt-3");
+    desc.innerHTML = mdRender(m.description);
+    box.appendChild(desc);
   }
   if (m.usage_text) {
     box.appendChild(el("h6", "fw-bold mt-4 mb-1", "用法"));
-    const pre = el("pre", "token-box", m.usage_text);
-    pre.style.whiteSpace = "pre-wrap";
-    box.appendChild(pre);
+    const usage = el("div", "md");
+    usage.innerHTML = mdRender(m.usage_text);
+    box.appendChild(usage);
   }
   box.appendChild(el("h6", "fw-bold mt-4 mb-1", "安装到本机暂存区"));
   const cmd = el("div", "token-box", `npx gesellschaft agile add ${m.slug}`);

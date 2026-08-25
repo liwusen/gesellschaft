@@ -12,6 +12,15 @@ function esc(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/** Markdown → 安全 HTML(marked + DOMPurify;库未加载时退回纯文本)。 */
+function mdRender(text) {
+  const raw = String(text == null ? "" : text);
+  if (typeof marked === "undefined" || typeof DOMPurify === "undefined") {
+    return esc(raw);
+  }
+  return DOMPurify.sanitize(marked.parse(raw));
+}
+
 async function api(path, options) {
   options = options || {};
   options.credentials = "include";
