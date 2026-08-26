@@ -24,8 +24,9 @@ export function sha256Text(text) {
 function openBrowser(url) {
   if (process.env.GESSELLSCHAFT_NO_BROWSER) return;
   if (process.platform === "win32") {
-    // cmd /c start 会把 URL 中的 & 当命令分隔符,必须用 explorer 打开
-    spawn("explorer", [url], { detached: true }).unref();
+    // explorer 对带查询串的 URL 会当文件路径;rundll32 走默认浏览器,无解析问题
+    spawn("rundll32", ["url.dll,FileProtocolHandler", url],
+      { detached: true, windowsVerbatimArguments: false }).unref();
   } else if (process.platform === "darwin") {
     spawn("open", [url], { detached: true }).unref();
   } else {
